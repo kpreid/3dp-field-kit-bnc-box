@@ -7,6 +7,7 @@ panel_thickness = 2;
 panel_rabbet = 1;
 box_radius = bnc_clearance_radius + wall_thickness * 2;
 box_flat_side = 30;
+box_inner_edge = box_radius - wall_thickness;
 
 cable_pitch = 0.1 * 25.4;  // std ribbon cable
 cable_width = cable_pitch * 3;
@@ -14,13 +15,19 @@ cable_thickness = cable_pitch;
 cable_retainer_height = 12;
 cable_retainer_bump = 1;
 
+snap_width = 5;
+snap_ysize = 0.5;
+snap_zsize = 1.0;
+snap_z_from_panel_base = 6;
+snap_z_from_shell_end = snap_z_from_panel_base - (panel_thickness - panel_rabbet);
+
 epsilon = 0.1;
 
 panel();
 translate([0, box_radius * 2.5]) shell();
 
 module panel() {
-    cable_hole_outer_edge = box_radius - wall_thickness;
+    cable_hole_outer_edge = box_inner_edge;
     cable_hole_inner_edge = cable_hole_outer_edge - cable_thickness;
 
     linear_extrude(panel_thickness)
@@ -43,14 +50,26 @@ module panel() {
         
         translate([0, -1/2, 0])
         cube([cable_width, 1, cable_retainer_height], center=true);
-    }    
+    }
+    
+    // locking snap
+    mirror([0, 1, 0]) {
+        support_thickness = 1;
+        // base / printing support
+        translate([-snap_width / 2, box_inner_edge - support_thickness, 0])
+        cube([snap_width, support_thickness, snap_z_from_panel_base + snap_zsize]);
+        
+        // actual snap
+        translate([-snap_width / 2, box_inner_edge, snap_z_from_panel_base])
+        cube([snap_width, snap_ysize, snap_zsize]);
+    }
     
     hull() {
         translate([0, cable_hole_inner_edge, cable_retainer_height / 2])
         cube([wall_thickness, epsilon, cable_retainer_height], center=true);
-        
-        translate([-wall_thickness / 2, -box_radius / 2, 0])
-        cube([wall_thickness, box_radius / 2, epsilon]);
+
+        translate([0, -box_inner_edge + epsilon, snap_z_from_panel_base / 2])
+        cube([wall_thickness, epsilon, snap_z_from_panel_base], center=true);
     }
 
     module negatives() {
@@ -66,13 +85,23 @@ module panel() {
 }
 
 module shell() {
+    shell_height = bnc_depth + wall_thickness;
+    snap_clearance_x = 0.8;
+    snap_clearance_z = 0.3;
+    
     difference() {
-        linear_extrude(bnc_depth + wall_thickness)
+        linear_extrude(shell_height)
         box_2d();
 
         translate([0, 0, wall_thickness])
-        linear_extrude(bnc_depth + epsilon)
+        linear_extrude(shell_height - wall_thickness + epsilon)
         box_inner_2d();
+        
+        translate([
+            -(snap_width / 2 + snap_clearance_x),
+            -box_radius - epsilon,
+            shell_height - snap_z_from_shell_end - (snap_zsize + snap_clearance_x)])
+        cube([snap_width + snap_clearance_x * 2, wall_thickness + epsilon * 2, snap_zsize + snap_clearance_z]);
     }
 }
 
@@ -87,6 +116,9 @@ module box_2d() {
     hull() {
         bnc_positions()
         circle(r=box_radius, $fn = 128);
+                
+        translate([-box_flat_side / 2, 0])
+        square([box_flat_side, box_radius]);
     }
 }
 
@@ -105,5 +137,5 @@ module bnc_hole_2d() {
         square([diameter, flat_diameter], center=true);
     }
 
-    %cylinder(r=bnc_clearance_radius, h=bnc_depth * 2, center=true, $fn=64);
+    *%cylinder(r=bnc_clearance_radius, h=bnc_depth * 2, center=true, $fn=64);
 }
