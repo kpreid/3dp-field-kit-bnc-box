@@ -2,29 +2,48 @@ bnc_spacing = 0.75 * 25.4;  // traditional binding post spacing seems like a goo
 // need at least 7 mm of clearance radius for hardware
 bnc_clearance_radius = 8;
 bnc_depth = 18;
-wall_thickness = 1;
+wall_thickness = 1.2;
 panel_thickness = 2;
 panel_rabbet = 1;
 box_radius = bnc_clearance_radius + wall_thickness * 2;
 box_flat_side = 30;
 box_inner_edge = box_radius - wall_thickness;
 
-cable_pitch = 0.1 * 25.4;  // std ribbon cable
+shell_height = bnc_depth + wall_thickness;
+
+cable_pitch = 0.053 * 25.4;  // std ribbon cable, plus a bit of oversized insulation
 cable_width = cable_pitch * 3;
 cable_thickness = cable_pitch;
 cable_retainer_height = 12;
 cable_retainer_bump = 1;
 
 snap_width = 5;
-snap_ysize = 0.5;
+snap_ysize = 0.8;
 snap_zsize = 1.0;
 snap_z_from_panel_base = 6;
 snap_z_from_shell_end = snap_z_from_panel_base - (panel_thickness - panel_rabbet);
 
 epsilon = 0.1;
 
-panel();
-translate([0, box_radius * 2.5]) shell();
+
+*test_fit();
+printable();
+
+
+module test_fit() {
+    //color("white")
+    %
+    translate([0, 0, shell_height + panel_thickness - panel_rabbet])
+    rotate([0, 180, 0])
+    shell();
+
+    panel();
+}
+
+module printable() {
+    panel();
+    translate([0, box_radius * 2.5]) shell();
+}
 
 module panel() {
     cable_hole_outer_edge = box_inner_edge;
@@ -85,8 +104,7 @@ module panel() {
 }
 
 module shell() {
-    shell_height = bnc_depth + wall_thickness;
-    snap_clearance_x = 0.8;
+    snap_clearance_x = 0.4;
     snap_clearance_z = 0.3;
     
     difference() {
@@ -100,7 +118,7 @@ module shell() {
         translate([
             -(snap_width / 2 + snap_clearance_x),
             -box_radius - epsilon,
-            shell_height - snap_z_from_shell_end - (snap_zsize + snap_clearance_x)])
+            shell_height - snap_z_from_shell_end - (snap_zsize + snap_clearance_z)])
         cube([snap_width + snap_clearance_x * 2, wall_thickness + epsilon * 2, snap_zsize + snap_clearance_z]);
     }
 }
