@@ -11,9 +11,8 @@ box_inner_edge = box_radius - wall_thickness;
 
 shell_height = bnc_depth + wall_thickness;
 
-cable_pitch = 0.053 * 25.4;  // std ribbon cable, plus a bit of oversized insulation
-cable_width = cable_pitch * 3;
-cable_thickness = cable_pitch;
+cable_width = 4.3 + 0.5;  // a bitoversized to account for printing error and inentional in the other direction
+cable_thickness = 1.53;
 cable_retainer_height = 12;
 cable_retainer_bump = 1;
 
